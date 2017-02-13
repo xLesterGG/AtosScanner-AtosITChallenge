@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -38,26 +39,49 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
-                final String url  = "http://192.168.1.88:8080";
+                final String url  = "http://192.168.0.104:8080/";
+                //new JsonObjectRequest()
 
-                StringRequest getRequest = new StringRequest(Request.Method.GET, url,
-                        new Response.Listener<String>()
-                        {
-                            @Override
-                            public void onResponse(String response) {
-                                // display response
-                                Log.d("Response", response.toString());
-                                eL.setText(response);
-                            }
-                        },
-                        new Response.ErrorListener()
-                        {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                Log.d("Error.Response", error.toString());
-                            }
+                JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url, (String)null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                       // Log.d("response", response.toString());
+                        try{
+                          // Log.d("response",response.getString("publickey"));
                         }
-                );
+                        catch (Exception e){
+
+                        }
+
+
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("aaaa",error.getMessage());
+
+
+                    }
+                });
+
+//                StringRequest getRequest = new StringRequest(Request.Method.GET, url,
+//                        new Response.Listener<String>()
+//                        {
+//                            @Override
+//                            public void onResponse(String response) {
+//                                // display response
+//                                Log.d("Response", response.toString());
+//                               // eL.setText(response);
+//                            }
+//                        },
+//                        new Response.ErrorListener()
+//                        {
+//                            @Override
+//                            public void onErrorResponse(VolleyError error) {
+//                                Log.d("Error.Response", error.toString());
+//                            }
+//                        }
+//                );
                 queue.add(getRequest);
             }
         });
