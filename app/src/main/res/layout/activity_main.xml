@@ -12,10 +12,22 @@
     android:orientation="vertical">
 
     <TextView
+        android:text="pubKey"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/pubKey" />
+
+    <TextView
+        android:text="signature"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/signature" />
+
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text=""
-        android:id="@+id/elocation"/>
+        android:text="verifyResult"
+        android:id="@+id/verifyResult"/>
 
     <Button
         android:layout_width="wrap_content"

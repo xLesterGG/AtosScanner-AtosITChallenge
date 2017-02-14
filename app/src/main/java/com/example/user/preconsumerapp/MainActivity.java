@@ -20,7 +20,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView eL;
+    TextView verResult,publicKeyString,signatureString;
     Button btn;
 
     @Override
@@ -29,17 +29,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        eL = (TextView)findViewById(R.id.elocation);
+        verResult = (TextView)findViewById(R.id.verifyResult);
+        publicKeyString = (TextView)findViewById(R.id.pubKey);
+        signatureString = (TextView)findViewById(R.id.signature);
         btn = (Button)findViewById(R.id.btn);
-
-
 
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
-                final String url  = "http://192.168.0.104:8080/";
+                final String url  = "http://192.168.56.1:8080/";
                 //new JsonObjectRequest()
 
                 JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url, (String)null, new Response.Listener<JSONObject>() {
@@ -47,7 +47,21 @@ public class MainActivity extends AppCompatActivity {
                     public void onResponse(JSONObject response) {
                        // Log.d("response", response.toString());
                         try{
-                          // Log.d("response",response.getString("publickey"));
+                           Log.d("response1",response.getString("publicKey"));
+                            Log.d("response2",response.getString("encryptedLocation"));
+                            String pubKey = response.getString("publicKey");
+                            String signature = response.getString("encryptedLocation");
+                            VerSig verify = new VerSig();
+                            Boolean verified = verify.verifySignature(pubKey,signature);
+                            if(verified){
+                                publicKeyString.setText("PublicKey: "+pubKey);
+                                signatureString.setText("Signature: "+signature);
+                                verResult.setText("Verified: "+verified);
+                            }else {
+                                publicKeyString.setText("PublicKey: "+pubKey);
+                                signatureString.setText("Signature: "+signature);
+                                verResult.setText("Verified: "+verified);
+                            }
                         }
                         catch (Exception e){
 
@@ -58,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d("aaaa",error.getMessage());
+                        Log.d("aaaa",error.toString());
 
 
                     }
