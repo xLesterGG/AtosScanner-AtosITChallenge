@@ -35,4 +35,30 @@
         android:text="getInfo"
         android:id="@+id/btn"/>
 
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/batchid"
+        android:text="Batch id"
+        android:layout_marginTop="100dp"
+        android:layout_gravity="center"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Scan QR"
+        android:id="@+id/scan"
+        android:layout_gravity="center"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/post"
+        android:text="Confirm transaction"
+        android:layout_gravity="center"
+        android:layout_marginTop="50dp"
+        />
+
+
 </LinearLayout>
