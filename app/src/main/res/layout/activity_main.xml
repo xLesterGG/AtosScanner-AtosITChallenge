@@ -12,16 +12,16 @@
     android:orientation="vertical">
 
     <TextView
-        android:text="pubKey"
+        android:text="EncryptedEncodedJson"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/pubKey" />
+        android:id="@+id/encryptedEncodedJson" />
 
     <TextView
-        android:text="signature"
+        android:text="EncryptedEncodedKey"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/signature" />
+        android:id="@+id/encryptedEncodedKey" />
 
     <TextView
         android:layout_width="wrap_content"
