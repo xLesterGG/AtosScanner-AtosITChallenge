@@ -3,8 +3,10 @@ package com.example.user.preconsumerapp;
 
 
 import android.util.Base64;
+import android.util.Log;
 
 import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.util.encoders.Hex;
 
 
 import java.io.FileReader;
@@ -24,10 +26,10 @@ public class VerifyHash {
 
     public String DecryptHash(PublicKey key,String encodedEncryptedHash)throws Exception{
         byte[] encryptedHash = hexStringToByteArray(encodedEncryptedHash);
-        //String decryptedHash = decrypt(encryptedHash,key);
-        //return decryptedHash;
-        String encodedHash = bytesToHex(encryptedHash);
-        return encodedHash;
+        String decryptedHash = decrypt(encryptedHash,key);
+        return decryptedHash;
+        //String encodedHash = bytesToHex(encryptedHash);
+        //return encodedHash;
     }
 
     public PublicKey ReadPemFile(String path) throws Exception {
@@ -66,11 +68,14 @@ public class VerifyHash {
         byte[] decryptedText = null;
         try {
             // get an RSA cipher object and print the provider
-            final Cipher cipher = Cipher.getInstance(key.getAlgorithm());
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 
             // decrypt the text using the private key
             cipher.init(Cipher.DECRYPT_MODE, key);
             decryptedText = cipher.doFinal(text);
+
+          //  Log.d("asdsadasd",new String(decryptedText));
+
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -80,16 +85,25 @@ public class VerifyHash {
     }
 
     public byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i+1), 16));
+//        int len = s.length();
+//        byte[] data = new byte[len / 2];
+//        for (int i = 0; i < len; i += 2) {
+//            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+//                    + Character.digit(s.charAt(i+1), 16));
+//        }
+//        return data;
+        try{
+            byte [] data = org.apache.commons.codec.binary.Hex.decodeHex(s.toCharArray());
+            return data;
+
+        }catch(Exception e){
+            e.printStackTrace();
         }
-        return data;
+        return null;
+
     }
 
-    public static String bytesToHex(byte[] bytes) {
+   /* public static String bytesToHex(byte[] bytes) {
         char[] hexChars = new char[bytes.length * 2];
         for ( int j = 0; j < bytes.length; j++ ) {
             int v = bytes[j] & 0xFF;
@@ -97,5 +111,5 @@ public class VerifyHash {
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
-    }
+    }*/
 }

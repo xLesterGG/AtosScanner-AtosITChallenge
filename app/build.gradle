@@ -28,5 +28,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.mcxiaoke.volley:library:1.0.19'
     compile 'com.google.zxing:android-integration:3.3.0'
-    compile group: 'org.bouncycastle', name: 'bcprov-jdk16', version: '1.46'
+    compile 'org.bouncycastle:bcprov-jdk16:1.46'
+    compile 'org.apache.directory.studio:org.apache.commons.codec:1.8'
 }
