@@ -1,8 +1,6 @@
 package com.example.user.preconsumerapp;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,48 +8,42 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
+import java.security.PublicKey;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView verResult,encryptedEncodedJson,encryptedEncodedKey,batchID;
+    TextView verResult,encodedEncryptedHash,originalData,batchID;
     Button btn,btnScan,btnPost;
     RequestQueue queue;
     JsonObjectRequest postRequest;
+    JSONObject responseData;
     String message;
-    String encryptedData,encryptedKey,filePath;
-
+    String encryptedHashData,original,filePath,temp;
+    Boolean verified;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         verResult = (TextView)findViewById(R.id.verifyResult);
-        encryptedEncodedJson = (TextView)findViewById(R.id.encryptedEncodedJson);
-        encryptedEncodedKey = (TextView)findViewById(R.id.encryptedEncodedKey);
+        encodedEncryptedHash = (TextView)findViewById(R.id.encodedEncryptedHash);
+        originalData = (TextView)findViewById(R.id.originalData);
         btn = (Button)findViewById(R.id.btn);
 
 
@@ -61,9 +53,7 @@ public class MainActivity extends AppCompatActivity {
 
         queue = Volley.newRequestQueue(getApplicationContext());
 
-        DownloadFile dl = new DownloadFile();
-        dl.execute();
-        Log.d("filepath?", filePath);
+        //Log.d("filepath?", filePath);
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -76,13 +66,37 @@ public class MainActivity extends AppCompatActivity {
                     public void onResponse(JSONObject response) {
                        // Log.d("response", response.toString());
                         try{
-                            Log.d("Obj1",response.getString("encodedEncryptedJson"));
-                            Log.d("Obj2",response.getString("encodedEncryptedKey"));
-                            encryptedData = response.getString("encodedEncryptedJson");
-                            encryptedKey = response.getString("encodedEncryptedKey");
-                            encryptedEncodedJson.setText("Encrypted Json: " + response.getString("encodedEncryptedJson"));
-                            encryptedEncodedKey.setText("Encrypted Key: " +response.getString("encodedEncryptedKey"));
-                            verResult.setText("Verified: ");
+                            //get json Object
+                            responseData = response;
+
+                            //get strings from json
+                            encryptedHashData = response.getString("encodedEncryptedHash");
+                            original = response.getString("originalData");
+                            Log.d("Obj1",response.getString("encodedEncryptedHash"));
+                            Log.d("Obj2",response.getString("originalData"));
+
+                            VerifyHash vh = new VerifyHash();
+                            temp= Environment.getExternalStorageDirectory().getPath()+"/cacert.pem";
+                            temp.replaceAll("\\s"," ");
+                            File f = new File(temp);
+                            if(f.exists())
+                            {
+                                filePath=f.toString();
+                                PublicKey key = vh.ReadPemFile(filePath);
+                                String decryptedhash = vh.DecryptHash(key,encryptedHashData);
+                                String rehash = vh.hashStringWithSHA(original);
+                                verified = vh.CompareHash(decryptedhash,rehash);
+                                Log.d("rehash", rehash);
+                                Log.d("decryptedhash", decryptedhash);
+                                verResult.setText("Verify Result: "+verified);
+                            }
+                            //DownloadFile dl = new DownloadFile();
+                            //dl.execute();
+
+                            //setText
+
+                            originalData.setText("Original Data: " +response.getString("originalData"));
+                            verResult.setText("Verified: "+verified);
                         }
                         catch (Exception e){
                             e.printStackTrace();
@@ -132,9 +146,16 @@ public class MainActivity extends AppCompatActivity {
         btnPost.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                JSONObject test = new JSONObject();
+                try {
+                    test.put("abc","aa");
+                    test.put("abcd","aa");
+                    test.put("abce","aa");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 message = batchID.getText().toString();
-                String link = "http://192.168.0.104:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" +  message+",encryptedlocation"+"&deadline=60&feeNQT=100000000";  // nxt api call for sending message
+                String link = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + test +"&deadline=60&feeNQT=100000000";  // nxt api call for sending message
 
                 try{
                     URL url = new URL(link);  // convert string to proper url
@@ -145,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
                                 public void onResponse(JSONObject response) {
                                     // response
                                     try{
-                                        Log.d("Response", response.getString("transaction"));
+                                        Log.d("Response", response.toString(4));
                                     }catch (JSONException e)
                                     {
                                         e.printStackTrace();
@@ -182,32 +203,32 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    class DownloadFile extends AsyncTask<String,String,String>
-    {
-        ProgressDialog loading;
-        String FILE_URL="https://atos-x509certs-jiahong96.c9users.io/cacert.pem";
-        String FILE_Name="cacert";
-        String temp;
-
-        @Override
-        protected void onPreExecute() {
-
-            super.onPreExecute();
-            loading = ProgressDialog.show(getApplicationContext(),"Loading...","Wait...", true, true);
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            filePath=result;
-            loading.dismiss();
-        }
-
-        @Override
-        protected String doInBackground(String... file_path) {
-            int readBytes;
-
-            String path;
-
+//    class DownloadFile extends AsyncTask<String,String,String>
+//    {
+//        ProgressDialog loading;
+//        String FILE_URL="https://upload.wikimedia.org/wikipedia/wikimania2014/thumb/e/e2/Ask-Logo-Small.jpg/250px-Ask-Logo-Small.jpg";
+//        String FILE_Name="cacert";
+//        String temp;
+//
+//        @Override
+//        protected void onPreExecute() {
+//
+//            super.onPreExecute();
+//            loading = ProgressDialog.show(MainActivity.this,"Loading...","Wait...", true, true);
+//        }
+//
+//        @Override
+//        protected void onPostExecute(String result) {
+//            filePath=result;
+//            loading.dismiss();
+//        }
+//
+//        @Override
+//        protected String doInBackground(String... file_path) {
+//            int readBytes;
+//
+//            String path;
+//
 //                temp= Environment.getExternalStorageDirectory().getPath()+"/"+FILE_Name+".pem";
 //                temp.replaceAll("\\s"," ");
 //                File f = new File(temp);
@@ -220,36 +241,36 @@ public class MainActivity extends AppCompatActivity {
 //                }
 //
 //                else{
-                    try{
-                        URL url = new URL(FILE_URL);
-                        URLConnection connection=url.openConnection();
-                        long fileLength=connection.getContentLength();
-
-                        InputStream input = new BufferedInputStream(url.openStream(),10*1024);
-                        OutputStream output = new FileOutputStream(Environment.getExternalStorageDirectory().getPath()+"/"+FILE_Name+".pem");
-                        byte data[]=new byte[1024];
-                        long totalBytes = 0;
-
-                        while((readBytes=input.read(data))!=-1)
-                        {
-                            totalBytes=totalBytes+readBytes;
-                            Long percentage = (totalBytes*100)/fileLength;
-                            publishProgress(String.valueOf(percentage));
-                            output.write(data,0,readBytes);
-                        }
-
-                        output.flush();
-                        output.close();
-                        input.close();
-                        path = Environment.getExternalStorageDirectory().toString()+"/"+FILE_Name+".pem";
-                        Log.d("got path?",path);
-                        return path;
-                    }catch(Exception e){
-                        Log.d("Error",e.getMessage());
-                    }
-//                }
-            return null;
-        }
-    }
+//                    try{
+//                        URL url = new URL(FILE_URL);
+//                        URLConnection connection=url.openConnection();
+//                        long fileLength=connection.getContentLength();
+//
+//                        InputStream input = new BufferedInputStream(url.openStream(),10*1024);
+//                        OutputStream output = new FileOutputStream(Environment.getExternalStorageDirectory().getPath()+"/"+FILE_Name+".jpg");
+//                        byte data[]=new byte[1024];
+//                        long totalBytes = 0;
+//
+//                        while((readBytes=input.read(data))!=-1)
+//                        {
+//                            totalBytes=totalBytes+readBytes;
+//                            Long percentage = (totalBytes*100)/fileLength;
+//                            publishProgress(String.valueOf(percentage));
+//                            output.write(data,0,readBytes);
+//                        }
+//
+//                        output.flush();
+//                        output.close();
+//                        input.close();
+//                        path = Environment.getExternalStorageDirectory().toString()+"/"+FILE_Name+".pem";
+//                        Log.d("got path?",path);
+//                        return path;
+//                    }catch(Exception e){
+//                        Log.d("Error",e.getMessage());
+//                    }
+////                }
+//            return null;
+//        }
+//    }
 
 }

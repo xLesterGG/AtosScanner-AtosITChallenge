@@ -12,27 +12,27 @@
     android:orientation="vertical">
 
     <TextView
-        android:text="EncryptedEncodedJson"
+        android:text=""
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/encryptedEncodedJson" />
+        android:id="@+id/encodedEncryptedHash" />
 
     <TextView
-        android:text="EncryptedEncodedKey"
+        android:text=""
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/encryptedEncodedKey" />
+        android:id="@+id/originalData" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="verifyResult"
+        android:text=""
         android:id="@+id/verifyResult"/>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="getInfo"
+        android:text="getInfoVerified"
         android:id="@+id/btn"/>
 
 
