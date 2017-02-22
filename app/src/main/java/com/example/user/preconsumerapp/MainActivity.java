@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 queue = Volley.newRequestQueue(getApplicationContext());
 
-                final String url  = "http://192.168.0.100:7080/";
+                final String url  = "http://192.168.212.90:7080/";
 
                 JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url, (String)null, new Response.Listener<JSONObject>() {
                     @Override
@@ -171,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 message = batchID.getText().toString();
-                String link = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + test +"&deadline=60&feeNQT=100000000";  // nxt api call for sending message
+                String link = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + test +"&deadline=60&feeNQT=0";  // nxt api call for sending message
 
                 try{
                     URL url = new URL(link);  // convert string to proper url
