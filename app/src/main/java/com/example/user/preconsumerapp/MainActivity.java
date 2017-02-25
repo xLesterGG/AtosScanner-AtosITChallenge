@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -73,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 queue = Volley.newRequestQueue(getApplicationContext());
 
-                final String url  = "http://192.168.212.90:7080/";
+                final String url  = "http://192.168.0.105:7080/";
 
                 JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url, (String)null, new Response.Listener<JSONObject>() {
                     @Override
@@ -162,48 +163,71 @@ public class MainActivity extends AppCompatActivity {
         btnPost.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                JSONObject test = new JSONObject();
-                try {
-                    test.put("abc","aa");
-                    test.put("abcd","aa");
-                    test.put("abce","aa");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                message = batchID.getText().toString();
-                String link = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + test +"&deadline=60&feeNQT=0";  // nxt api call for sending message
 
-                try{
-                    URL url = new URL(link);  // convert string to proper url
-                    postRequest = new JsonObjectRequest(Request.Method.POST, url.toString(),(String)null,
-                            new Response.Listener<JSONObject>()
-                            {
-                                @Override
-                                public void onResponse(JSONObject response) {
-                                    // response
-                                    try{
-                                        Log.d("Response", response.toString(4));
-                                    }catch (JSONException e)
+                String link;
+
+                if(responseData== null){
+                    Log.d("NULL","NULLLLLLLLL");
+                    Toast.makeText(getApplicationContext(),"Please ensure that you are connected to a network with a working server",Toast.LENGTH_LONG).show();
+
+                }
+                else if(batchID.getText().toString().equals("")){
+                    Log.d("null laaaa","aaaaaaaaaaa");
+                    Toast.makeText(getApplicationContext(),"Please scan a valid QR before trying to make a transaction",Toast.LENGTH_LONG).show();
+                }
+                else{
+                    Log.d("NULL","not nullllllll");
+
+                    JSONObject toPost = new JSONObject();
+                    try{
+                        toPost.put("encryptedHash",responseData.getString("encodedEncryptedHash").toString());
+                        toPost.put("batchID",batchID.getText().toString());
+                        toPost.put("unhashedData",responseData.getString("originalData"));
+
+                        Log.d("LOGGG", toPost.toString());
+
+                        message = batchID.getText().toString();
+
+                        link = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + toPost +"&deadline=60&feeNQT=0";  // nxt api call for sending message
+
+                        try{
+                            URL url = new URL(link);  // convert string to proper url
+                            postRequest = new JsonObjectRequest(Request.Method.POST, url.toString(),(String)null,
+                                    new Response.Listener<JSONObject>()
                                     {
-                                        e.printStackTrace();
+                                        @Override
+                                        public void onResponse(JSONObject response) {
+                                            // response
+                                            try{
+                                                Log.d("Response", response.toString(4));
+                                            }catch (JSONException e)
+                                            {
+                                                e.printStackTrace();
+                                            }
+
+                                        }
+                                    },
+                                    new Response.ErrorListener()
+                                    {
+                                        @Override
+                                        public void onErrorResponse(VolleyError error) {
+                                            // error
+                                            Log.d("Error.Response", error.toString());
+                                        }
                                     }
+                            );
 
-                                }
-                            },
-                            new Response.ErrorListener()
-                            {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    // error
-                                    Log.d("Error.Response", error.toString());
-                                }
-                            }
-                    );
+                        }catch (MalformedURLException e){
+                            e.printStackTrace();
+                        }
 
-                }catch (MalformedURLException e){
-                    e.printStackTrace();
+
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
                 }
-                queue.add(postRequest);
+
+               // queue.add(postRequest);
 
             }
         });
