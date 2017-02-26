@@ -10,7 +10,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,19 +31,19 @@ import org.json.JSONObject;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.security.PublicKey;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView verResult,encodedEncryptedHash,originalData,batchID;
+    TextView verResult,encodedEncryptedHash,originalData,batchIDv;
     Button btn,btnScan,btnPost;
     RequestQueue queue;
     JsonObjectRequest postRequest;
     JSONObject responseData;
     String message;
-    String encryptedHashData,original,filePath,temp;
+    String encryptedHashData,original,filePath,temp,nxtAccNum,batchID,productName;
     Boolean verified;
+    Spinner spinner;
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
@@ -62,11 +64,16 @@ public class MainActivity extends AppCompatActivity {
         btn = (Button)findViewById(R.id.btn);
 
 
-        batchID = (TextView)findViewById(R.id.batchid);
+        batchIDv = (TextView)findViewById(R.id.batchid);
         btnScan = (Button)findViewById(R.id.scan);
         btnPost = (Button)findViewById(R.id.post);
+        spinner = (Spinner)findViewById(R.id.spinner);
 
         queue = Volley.newRequestQueue(getApplicationContext());
+
+        ArrayAdapter<CharSequence> adapter =  ArrayAdapter.createFromResource(this,R.array.action_array,R.layout.support_simple_spinner_dropdown_item);
+        adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item );
+        spinner.setAdapter(adapter);
 
         //Log.d("filepath?", filePath);
         btn.setOnClickListener(new View.OnClickListener() {
@@ -85,10 +92,10 @@ public class MainActivity extends AppCompatActivity {
                             responseData = response;
 
                             //get strings from json
-                            encryptedHashData = response.getString("encodedEncryptedHash");
-                            original = response.getString("originalData");
-                            Log.d("Obj1",response.getString("encodedEncryptedHash"));
-                            Log.d("Obj2",response.getString("originalData"));
+                            encryptedHashData = response.getString("encryptedHash");
+                            original = response.getString("unhashedData");
+                            Log.d("Obj1",response.getString("encryptedHash"));
+                            Log.d("Obj2",response.getString("unhashedData"));
 
                             VerifyHash vh = new VerifyHash();
                             temp= Environment.getExternalStorageDirectory().getPath()+"/cacert.pem";
@@ -112,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
 
                             //setText
 
-                            originalData.setText("Original Data: " +response.getString("originalData"));
+                            originalData.setText("Original Data: " +response.getString("unhashedData"));
                             verResult.setText("Verified: "+verified);
                         }
                         catch (Exception e){
@@ -171,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(),"Please ensure that you are connected to a network with a working server",Toast.LENGTH_LONG).show();
 
                 }
-                else if(batchID.getText().toString().equals("")){
+                else if(nxtAccNum == null){
                     Log.d("null laaaa","aaaaaaaaaaa");
                     Toast.makeText(getApplicationContext(),"Please scan a valid QR before trying to make a transaction",Toast.LENGTH_LONG).show();
                 }
@@ -180,13 +187,14 @@ public class MainActivity extends AppCompatActivity {
 
                     JSONObject toPost = new JSONObject();
                     try{
-                        toPost.put("encryptedHash",responseData.getString("encodedEncryptedHash").toString());
-                        toPost.put("batchID",batchID.getText().toString());
-                        toPost.put("unhashedData",responseData.getString("originalData"));
+                        toPost.put("encryptedHash",responseData.getString("encryptedHash"));
+                        toPost.put("batchID",batchIDv.getText().toString());
+                        toPost.put("unhashedData",responseData.getString("unhashedData"));
+                        toPost.put("movement",spinner.getSelectedItem().toString().toLowerCase());
 
                         Log.d("LOGGG", toPost.toString());
 
-                        message = batchID.getText().toString();
+                        message = batchIDv.getText().toString();
 
                         link = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + toPost +"&deadline=60&feeNQT=0";  // nxt api call for sending message
 
@@ -221,7 +229,6 @@ public class MainActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
 
-
                     }catch (Exception e){
                         e.printStackTrace();
                     }
@@ -239,11 +246,29 @@ public class MainActivity extends AppCompatActivity {
         IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
         if (scanResult != null) {
             Log.d("result",scanResult.toString());
-            batchID.setText(scanResult.toString());
+
+            try{
+                JSONObject qrData = new JSONObject(scanResult.getContents());
+
+                if(qrData.has("nxtAccNum") && qrData.has("batchID") && qrData.has("productName")){
+                    Toast.makeText(getApplicationContext(),"Valid FoodChain™ QR detected",Toast.LENGTH_LONG).show();
+                    nxtAccNum = qrData.getString("nxtAccNum");
+                    batchID = qrData.getString("batchID");        // format of qr data
+                    productName = qrData.getString("productName");
+
+                    batchIDv.setText(nxtAccNum + batchID + productName);
+                }else{
+                    Toast.makeText(getApplicationContext(),"Not a Valid FoodChain™ QR , please try again",Toast.LENGTH_LONG).show();
+                }
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+
         }
     }
 
-    public static void verifyStoragePermissions(Activity activity) {
+    public static void verifyStoragePermissions(Activity activity) { // for marshmallow permissions
         // Check if we have write permission
         int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 

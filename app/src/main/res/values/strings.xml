@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">PreConsumerApp</string>
+    <string-array name="action_array">
+        <item>In</item>
+        <item>Out</item>
+
+    </string-array>
 </resources>
