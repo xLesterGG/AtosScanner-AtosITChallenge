@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     JSONObject responseData;
     String message;
     String encryptedHashData,original,filePath,temp,nxtAccNum,batchID,productName;
+    byte [] test;
     Boolean verified;
     Spinner spinner;
 
@@ -81,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 queue = Volley.newRequestQueue(getApplicationContext());
 
-                final String url  = "http://192.168.0.105:7080/";
+                final String url  = "http://192.168.56.1:7080/";
 
                 JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url, (String)null, new Response.Listener<JSONObject>() {
                     @Override
@@ -92,7 +93,10 @@ public class MainActivity extends AppCompatActivity {
                             responseData = response;
 
                             //get strings from json
-                            encryptedHashData = response.getString("encryptedHash");
+                            //encryptedHashData = response.getString("encryptedHash");
+                            JSONObject a = new JSONObject();
+                            a = response.getJSONObject("encryptedHash");
+                            test = a.toString().getBytes("UTF-8");
                             original = response.getString("unhashedData");
                             Log.d("Obj1",response.getString("encryptedHash"));
                             Log.d("Obj2",response.getString("unhashedData"));
@@ -105,7 +109,8 @@ public class MainActivity extends AppCompatActivity {
                             {
                                 filePath=f.toString();
                                 PublicKey key = vh.ReadPemFile(filePath);
-                                String decryptedhash = vh.DecryptHash(key,encryptedHashData);
+                                //String decryptedhash = vh.DecryptHash(key,encryptedHashData);
+                                String decryptedhash = vh.DecryptHash(key,test);
                                 String rehash = vh.hashStringWithSHA(original);
                                 verified = vh.CompareHash(decryptedhash,rehash);
                                 Log.d("rehash", rehash);
