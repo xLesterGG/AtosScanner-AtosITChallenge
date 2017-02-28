@@ -31,6 +31,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.PublicKey;
 
 public class MainActivity extends AppCompatActivity {
@@ -116,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
                             }
                             //DownloadFile dl = new DownloadFile();
                             //dl.execute();
-
                             //setText
 
                             originalData.setText("Original Data: " +response.getString("unhashedData"));
@@ -187,19 +187,27 @@ public class MainActivity extends AppCompatActivity {
 
                     JSONObject toPost = new JSONObject();
                     try{
-                        toPost.put("encryptedHash",responseData.getString("encryptedHash"));
-                        toPost.put("batchID",batchIDv.getText().toString());
-                        toPost.put("unhashedData",responseData.getString("unhashedData"));
+                        //toPost.put("encryptedHash",responseData.getString("encryptedHash"));
+                        toPost.put("encryptedHash","5E674BB98239F4B9BBDD3CF545023FAE421BC0B8C5D0B111111111111111111111111111111111111111111111111111111111111111");
+                        toPost.put("batchID",batchID);
+                       // toPost.put("unhashedData",responseData.getString("unhashedData"));
                         toPost.put("movement",spinner.getSelectedItem().toString().toLowerCase());
+
 
                         Log.d("LOGGG", toPost.toString());
 
                         message = batchIDv.getText().toString();
 
-                        link = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + toPost +"&deadline=60&feeNQT=0";  // nxt api call for sending message
+                       link = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + toPost +"&deadline=60&feeNQT=0";  // nxt api call for sending message
+                        String secret = "bridge twice ash force birth pause trickle sharp tender disappear spoken kid";
+                        secret = secret.replaceAll(" ","%20");
+
+                       /* link = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase="+ secret +"&recipient="+ nxtAccNum +"&message=" + toPost +"&deadline=60&feeNQT=0";  // nxt api call for sending message
+                        Log.d("asdf",link);*/
 
                         try{
                             URL url = new URL(link);  // convert string to proper url
+                            Log.d("url",url.toString());
                             postRequest = new JsonObjectRequest(Request.Method.POST, url.toString(),(String)null,
                                     new Response.Listener<JSONObject>()
                                     {
@@ -232,9 +240,10 @@ public class MainActivity extends AppCompatActivity {
                     }catch (Exception e){
                         e.printStackTrace();
                     }
-                }
 
-               // queue.add(postRequest);
+                    queue.add(postRequest);
+
+                }
 
             }
         });
