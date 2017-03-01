@@ -2,8 +2,10 @@ package com.example.user.preconsumerapp;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -28,9 +30,14 @@ import com.google.zxing.integration.android.IntentResult;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.security.PublicKey;
 
@@ -42,8 +49,8 @@ public class MainActivity extends AppCompatActivity {
     JsonObjectRequest postRequest;
     JSONObject responseData;
     String message;
-    String encryptedHashData,original,filePath,temp,nxtAccNum,batchID,productName;
-    byte [] test;
+    String link1,link2,link3;
+    String encryptedHashData,encryptedHash1,encryptedHash2,original,filePath,temp,nxtAccNum,batchID,productName;
     Boolean verified;
     Spinner spinner;
 
@@ -83,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 queue = Volley.newRequestQueue(getApplicationContext());
 
-                final String url  = "http://192.168.56.1:7080/";
+                final String url  = "http://192.168.43.61:7080/";
 
                 JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url, (String)null, new Response.Listener<JSONObject>() {
                     @Override
@@ -94,14 +101,14 @@ public class MainActivity extends AppCompatActivity {
                             responseData = response;
 
                             //get strings from json
-                            //encryptedHashData = response.getString("encryptedHash");
-                            JSONObject a = new JSONObject();
-                            a = response.getJSONObject("encryptedHash");
-                            test = a.toString().getBytes("UTF-8");
+                            encryptedHash1 = response.getString("encryptedHash1");
+                            encryptedHash2 = response.getString("encryptedHash2");
                             original = response.getString("unhashedData");
-                            Log.d("Obj1",response.getString("encryptedHash"));
-                            Log.d("Obj2",response.getString("unhashedData"));
+                            Log.d("Str1",response.getString("encryptedHash1"));
+                            Log.d("Str2",response.getString("encryptedHash2"));
+                            Log.d("Original Json",response.getString("unhashedData"));
 
+                            encryptedHashData = encryptedHash1 + encryptedHash2;
                             VerifyHash vh = new VerifyHash();
                             temp= Environment.getExternalStorageDirectory().getPath()+"/cacert.pem";
                             temp.replaceAll("\\s"," ");
@@ -110,8 +117,7 @@ public class MainActivity extends AppCompatActivity {
                             {
                                 filePath=f.toString();
                                 PublicKey key = vh.ReadPemFile(filePath);
-                                //String decryptedhash = vh.DecryptHash(key,encryptedHashData);
-                                String decryptedhash = vh.DecryptHash(key,test);
+                                String decryptedhash = vh.DecryptHash(key,encryptedHashData);
                                 String rehash = vh.hashStringWithSHA(original);
                                 verified = vh.CompareHash(decryptedhash,rehash);
                                 Log.d("rehash", rehash);
@@ -175,80 +181,48 @@ public class MainActivity extends AppCompatActivity {
         btnPost.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                String test1 = "{\"batchID\":\"b001\",\"movement\":\"end\",\"unhashedData\":{\"currentDateTime\":\"Mon, 2017-February-27 13:07:21\",\"location\":\"SWE2222\"}}";
+                String test2 = "{\"encryptedHash1\":\"70B8148C84309D1220EF60C9EAC5D81E788A40E591BE7C8E6BDC52A661A35FB6E52B5834D8E963E6D0DA4F08EDB1BA9DAFD98119A0D56E124C6A89FC7345A743\"}";
+                String test3 = "{\"encryptedHash2\":\"160CCFF0811361CE5591A13711D68B91C5B82A31217D934D2711A1AA343CF79DDC7F53834D2CA1009CA2F723FFFB9ED3A21520E06B8496549B54CD5736F132B2\"}";
+                link1 = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + test1 +"&deadline=60&feeNQT=0";  // nxt api call for sending message
+                link2 = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + test2 +"&deadline=60&feeNQT=0";  // nxt api call for sending message
+                link3 = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + test3 +"&deadline=60&feeNQT=0";  // nxt api call for sending message
 
-                String link;
+                JSONObject toPost = new JSONObject();
+                try{
+                    //toPost.put("encryptedHash",responseData.getString("encryptedHash"));
+                    toPost.put("encryptedHash","5E674BB98239F4B9BBDD3CF545023FAE421BC0B8C5D0B111111111111111111111111111111111111111111111111111111111111111");
+                    toPost.put("batchID",batchID);
+                    // toPost.put("unhashedData",responseData.getString("unhashedData"));
+                    toPost.put("movement",spinner.getSelectedItem().toString().toLowerCase());
 
-                if(responseData== null){
-                    Log.d("NULL","NULLLLLLLLL");
-                    Toast.makeText(getApplicationContext(),"Please ensure that you are connected to a network with a working server",Toast.LENGTH_LONG).show();
 
+                    Log.d("LOGGG", toPost.toString());
+
+                    message = batchIDv.getText().toString();
+
+                    String secret = "bridge twice ash force birth pause trickle sharp tender disappear spoken kid";
+                    secret = secret.replaceAll(" ","%20");
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
-                else if(nxtAccNum == null){
-                    Log.d("null laaaa","aaaaaaaaaaa");
-                    Toast.makeText(getApplicationContext(),"Please scan a valid QR before trying to make a transaction",Toast.LENGTH_LONG).show();
-                }
-                else{
-                    Log.d("NULL","not nullllllll");
-
-                    JSONObject toPost = new JSONObject();
-                    try{
-                        //toPost.put("encryptedHash",responseData.getString("encryptedHash"));
-                        toPost.put("encryptedHash","5E674BB98239F4B9BBDD3CF545023FAE421BC0B8C5D0B111111111111111111111111111111111111111111111111111111111111111");
-                        toPost.put("batchID",batchID);
-                       // toPost.put("unhashedData",responseData.getString("unhashedData"));
-                        toPost.put("movement",spinner.getSelectedItem().toString().toLowerCase());
-
-
-                        Log.d("LOGGG", toPost.toString());
-
-                        message = batchIDv.getText().toString();
-
-                       link = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + toPost +"&deadline=60&feeNQT=0";  // nxt api call for sending message
-                        String secret = "bridge twice ash force birth pause trickle sharp tender disappear spoken kid";
-                        secret = secret.replaceAll(" ","%20");
-
                        /* link = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase="+ secret +"&recipient="+ nxtAccNum +"&message=" + toPost +"&deadline=60&feeNQT=0";  // nxt api call for sending message
                         Log.d("asdf",link);*/
+                firstPost(link1);
+//                if(responseData== null){
+//                    Log.d("NULL","NULLLLLLLLL");
+//                    Toast.makeText(getApplicationContext(),"Please ensure that you are connected to a network with a working server",Toast.LENGTH_LONG).show();
+//
+//                }
+//                else if(nxtAccNum == null){
+//                    Log.d("null laaaa","aaaaaaaaaaa");
+//                    Toast.makeText(getApplicationContext(),"Please scan a valid QR before trying to make a transaction",Toast.LENGTH_LONG).show();
+//                }
+//                else{
+                    Log.d("NULL","not nullllllll");
 
-                        try{
-                            URL url = new URL(link);  // convert string to proper url
-                            Log.d("url",url.toString());
-                            postRequest = new JsonObjectRequest(Request.Method.POST, url.toString(),(String)null,
-                                    new Response.Listener<JSONObject>()
-                                    {
-                                        @Override
-                                        public void onResponse(JSONObject response) {
-                                            // response
-                                            try{
-                                                Log.d("Response", response.toString(4));
-                                            }catch (JSONException e)
-                                            {
-                                                e.printStackTrace();
-                                            }
 
-                                        }
-                                    },
-                                    new Response.ErrorListener()
-                                    {
-                                        @Override
-                                        public void onErrorResponse(VolleyError error) {
-                                            // error
-                                            Log.d("Error.Response", error.toString());
-                                        }
-                                    }
-                            );
-
-                        }catch (MalformedURLException e){
-                            e.printStackTrace();
-                        }
-
-                    }catch (Exception e){
-                        e.printStackTrace();
-                    }
-
-                    queue.add(postRequest);
-
-                }
+               // }
 
             }
         });
@@ -295,6 +269,49 @@ public class MainActivity extends AppCompatActivity {
             );
         }
     }
+    public void firstPost(String urlString) {
+
+        try{
+            URL url = new URL(urlString);  // convert string to proper url
+            Log.d("url",url.toString());
+            postRequest = new JsonObjectRequest(Request.Method.POST, url.toString(),(String)null,
+                    new Response.Listener<JSONObject>()
+                    {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            // response
+                            try{
+                                Log.d("Response", response.toString(4));
+//                                for(int i=0;i<2;i++){
+//                                    if(i==0){
+//                                        firstPost(link2);
+//                                    }else{
+//                                        firstPost(link3);
+//                                    }
+//                                }
+                            }catch (JSONException e)
+                            {
+                                e.printStackTrace();
+                            }
+
+                        }
+                    },
+                    new Response.ErrorListener()
+                    {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            // error
+                            Log.d("Error.Response", error.toString());
+                        }
+                    }
+            );
+
+        }catch (MalformedURLException e){
+            e.printStackTrace();
+        }
+
+        queue.add(postRequest);
+    }
 
 //    class DownloadFile extends AsyncTask<String,String,String>
 //    {
@@ -321,7 +338,6 @@ public class MainActivity extends AppCompatActivity {
 //            int readBytes;
 //
 //            String path;
-//
 //                temp= Environment.getExternalStorageDirectory().getPath()+"/"+FILE_Name+".pem";
 //                temp.replaceAll("\\s"," ");
 //                File f = new File(temp);

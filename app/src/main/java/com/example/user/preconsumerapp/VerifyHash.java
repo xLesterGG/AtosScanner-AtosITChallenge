@@ -1,5 +1,7 @@
 package com.example.user.preconsumerapp;
 
+import android.util.Base64;
+
 import org.bouncycastle.openssl.PEMReader;
 
 import java.io.FileReader;
@@ -17,10 +19,9 @@ import javax.crypto.Cipher;
 public class VerifyHash {
     final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
 
-    //public String DecryptHash(PublicKey key,String encodedEncryptedHash)throws Exception{
-    public String DecryptHash(PublicKey key, byte [] EncryptedHash)throws Exception{
-        //byte[] encryptedHash = hexStringToByteArray(encodedEncryptedHash);
-        String decryptedHash = decrypt(EncryptedHash,key);
+    public String DecryptHash(PublicKey key,String encodedEncryptedHash)throws Exception{
+        byte[] encryptedHash = hexStringToByteArray(encodedEncryptedHash);
+        String decryptedHash = decrypt(encryptedHash,key);
         return decryptedHash;
     }
 
