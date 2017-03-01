@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 queue = Volley.newRequestQueue(getApplicationContext());
 
-                final String url  = "http://192.168.43.61:7080/";
+                final String url  = "http://192.168.0.100:7080/";
 
                 JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url, (String)null, new Response.Listener<JSONObject>() {
                     @Override
@@ -109,6 +109,8 @@ public class MainActivity extends AppCompatActivity {
                             Log.d("Original Json",response.getString("unhashedData"));
 
                             encryptedHashData = encryptedHash1 + encryptedHash2;
+
+
                             VerifyHash vh = new VerifyHash();
                             temp= Environment.getExternalStorageDirectory().getPath()+"/cacert.pem";
                             temp.replaceAll("\\s"," ");
@@ -117,7 +119,9 @@ public class MainActivity extends AppCompatActivity {
                             {
                                 filePath=f.toString();
                                 PublicKey key = vh.ReadPemFile(filePath);
-                                String decryptedhash = vh.DecryptHash(key,encryptedHashData);
+                                //String decryptedhash = vh.DecryptHash(key,encryptedHashData);
+
+                                String decryptedhash = vh.DecryptHash(key,response.getString("encryptedHash"));
                                 String rehash = vh.hashStringWithSHA(original);
                                 verified = vh.CompareHash(decryptedhash,rehash);
                                 Log.d("rehash", rehash);
@@ -184,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
                 String test1 = "{\"batchID\":\"b001\",\"movement\":\"end\",\"unhashedData\":{\"currentDateTime\":\"Mon, 2017-February-27 13:07:21\",\"location\":\"SWE2222\"}}";
                 String test2 = "{\"encryptedHash1\":\"70B8148C84309D1220EF60C9EAC5D81E788A40E591BE7C8E6BDC52A661A35FB6E52B5834D8E963E6D0DA4F08EDB1BA9DAFD98119A0D56E124C6A89FC7345A743\"}";
                 String test3 = "{\"encryptedHash2\":\"160CCFF0811361CE5591A13711D68B91C5B82A31217D934D2711A1AA343CF79DDC7F53834D2CA1009CA2F723FFFB9ED3A21520E06B8496549B54CD5736F132B2\"}";
-                link1 = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + test1 +"&deadline=60&feeNQT=0";  // nxt api call for sending message
+                link1 = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + URLEncoder.encode(test1) +"&deadline=60&feeNQT=0";  // nxt api call for sending message
                 link2 = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + test2 +"&deadline=60&feeNQT=0";  // nxt api call for sending message
                 link3 = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase=appear%20morning%20crap%20became%20fire%20liquid%20probably%20tease%20rare%20swear%20shut%20grief&recipient=NXT-2N9Y-MQ6D-WAAS-G88VH&message=" + test3 +"&deadline=60&feeNQT=0";  // nxt api call for sending message
 
@@ -201,8 +205,8 @@ public class MainActivity extends AppCompatActivity {
 
                     message = batchIDv.getText().toString();
 
-                    String secret = "bridge twice ash force birth pause trickle sharp tender disappear spoken kid";
-                    secret = secret.replaceAll(" ","%20");
+//                    String secret = "bridge twice ash force birth pause trickle sharp tender disappear spoken kid";
+//                    secret = secret.replaceAll(" ","%20");
                 }catch (Exception e){
                     e.printStackTrace();
                 }
@@ -274,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
         try{
             URL url = new URL(urlString);  // convert string to proper url
             Log.d("url",url.toString());
-            postRequest = new JsonObjectRequest(Request.Method.POST, url.toString(),(String)null,
+            postRequest = new JsonObjectRequest(Request.Method.POST, urlString,(String)null,
                     new Response.Listener<JSONObject>()
                     {
                         @Override
@@ -282,13 +286,91 @@ public class MainActivity extends AppCompatActivity {
                             // response
                             try{
                                 Log.d("Response", response.toString(4));
-//                                for(int i=0;i<2;i++){
-//                                    if(i==0){
-//                                        firstPost(link2);
-//                                    }else{
-//                                        firstPost(link3);
-//                                    }
-//                                }
+                                Log.d("response",response.toString());
+
+                                secondPost(link2);
+
+                            }catch (JSONException e)
+                            {
+                                e.printStackTrace();
+                            }
+
+                        }
+                    },
+                    new Response.ErrorListener()
+                    {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            // error
+                            Log.d("Error.Response", error.toString());
+                        }
+                    }
+            );
+
+        }catch (MalformedURLException e){
+            e.printStackTrace();
+        }
+
+        queue.add(postRequest);
+    }
+
+    public void secondPost(String urlString) {
+
+        try{
+            URL url = new URL(urlString);  // convert string to proper url
+            Log.d("url",url.toString());
+            postRequest = new JsonObjectRequest(Request.Method.POST, urlString,(String)null,
+                    new Response.Listener<JSONObject>()
+                    {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            // response
+                            try{
+                                Log.d("Response", response.toString(4));
+                                Log.d("response",response.toString());
+
+                                thirdPost(link3);
+                            }catch (JSONException e)
+                            {
+                                e.printStackTrace();
+                            }
+
+                        }
+                    },
+                    new Response.ErrorListener()
+                    {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            // error
+                            Log.d("Error.Response", error.toString());
+                        }
+                    }
+            );
+
+        }catch (MalformedURLException e){
+            e.printStackTrace();
+        }
+
+        queue.add(postRequest);
+    }
+
+    public void thirdPost(String urlString) {
+
+        try{
+            URL url = new URL(urlString);  // convert string to proper url
+            Log.d("url",url.toString());
+            postRequest = new JsonObjectRequest(Request.Method.POST, urlString,(String)null,
+                    new Response.Listener<JSONObject>()
+                    {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            // response
+                            try{
+                                Log.d("Response", response.toString(4));
+                                Log.d("response",response.toString());
+
+                                Toast.makeText(getApplicationContext(),"Successfully posted",Toast.LENGTH_LONG).show();
+
                             }catch (JSONException e)
                             {
                                 e.printStackTrace();
