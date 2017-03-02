@@ -43,14 +43,15 @@ import java.security.PublicKey;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView verResult,encodedEncryptedHash,originalData,batchIDv;
-    Button btn,btnScan,btnPost;
+    TextView verResult, encodedEncryptedHash, originalData, batchIDv;
+    Button btn, btnScan, btnPost;
     RequestQueue queue;
     JsonObjectRequest postRequest;
     JSONObject responseData;
     String message;
-    String link1,link2,link3,link4;
-    String encryptedHashData,encryptedHash1,encryptedHash2,encryptedHash3,original,filePath,temp,nxtAccNum,batchID,productName;
+    String link1, link2, link3, link4;
+    String encryptedHashData, encryptedHash1, encryptedHash2, encryptedHash3, original, temp, nxtAccNum, batchID, productName;
+    String filePath[];
     Boolean verified;
     Spinner spinner;
 
@@ -67,36 +68,37 @@ public class MainActivity extends AppCompatActivity {
 
         verifyStoragePermissions(MainActivity.this);
 
-        verResult = (TextView)findViewById(R.id.verifyResult);
-        encodedEncryptedHash = (TextView)findViewById(R.id.encodedEncryptedHash);
-        originalData = (TextView)findViewById(R.id.originalData);
-        btn = (Button)findViewById(R.id.btn);
+        verResult = (TextView) findViewById(R.id.verifyResult);
+        encodedEncryptedHash = (TextView) findViewById(R.id.encodedEncryptedHash);
+        originalData = (TextView) findViewById(R.id.originalData);
+        btn = (Button) findViewById(R.id.btn);
 
+        batchIDv = (TextView) findViewById(R.id.batchid);
+        btnScan = (Button) findViewById(R.id.scan);
+        btnPost = (Button) findViewById(R.id.post);
+        spinner = (Spinner) findViewById(R.id.spinner);
 
-        batchIDv = (TextView)findViewById(R.id.batchid);
-        btnScan = (Button)findViewById(R.id.scan);
-        btnPost = (Button)findViewById(R.id.post);
-        spinner = (Spinner)findViewById(R.id.spinner);
+        DownloadFile dl = new DownloadFile();
+        dl.execute();
 
         queue = Volley.newRequestQueue(getApplicationContext());
 
-        ArrayAdapter<CharSequence> adapter =  ArrayAdapter.createFromResource(this,R.array.action_array,R.layout.support_simple_spinner_dropdown_item);
-        adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item );
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.action_array, R.layout.support_simple_spinner_dropdown_item);
+        adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
 
-        //Log.d("filepath?", filePath);
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 queue = Volley.newRequestQueue(getApplicationContext());
 
-                final String url  = "http://192.168.43.61:7080/";
+                final String url = "http://192.168.43.61:7080/";
 
-                JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url, (String)null, new Response.Listener<JSONObject>() {
+                JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url, (String) null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                       // Log.d("response", response.toString());
-                        try{
+                        // Log.d("response", response.toString());
+                        try {
                             //get json Object
                             responseData = response;
 
@@ -105,40 +107,34 @@ public class MainActivity extends AppCompatActivity {
                             encryptedHash2 = response.getString("encryptedHash2");
                             encryptedHash3 = response.getString("encryptedHash3");
                             original = response.getString("unhashedData");
-                            Log.d("Str1",response.getString("encryptedHash1"));
-                            Log.d("Str2",response.getString("encryptedHash2"));
-                            Log.d("Original Json",response.getString("unhashedData"));
+                            Log.d("Str1", response.getString("encryptedHash1"));
+                            Log.d("Str2", response.getString("encryptedHash2"));
+                            Log.d("Str3", response.getString("encryptedHash3"));
+                            Log.d("Original Json", response.getString("unhashedData"));
 
                             encryptedHashData = encryptedHash1 + encryptedHash2 + encryptedHash3;
 
-
                             VerifyHash vh = new VerifyHash();
-                            temp= Environment.getExternalStorageDirectory().getPath()+"/cacert.pem";
-                            temp.replaceAll("\\s"," ");
+                            temp = Environment.getExternalStorageDirectory().getPath() + "/cacert.pem";
+                            temp.replaceAll("\\s", " ");
                             File f = new File(temp);
-                            if(f.exists())
-                            {
-                                filePath=f.toString();
-                                PublicKey key = vh.ReadPemFile(filePath);
-                                String decryptedhash = vh.DecryptHash(key,encryptedHashData);
+                            if (f.exists()) {
+                                PublicKey key = vh.ReadPemFile(f.toString());
+                                String decryptedhash = vh.DecryptHash(key, encryptedHashData);
 
                                 //String decryptedhash = vh.DecryptHash(key,response.getString("encryptedHash"));
                                 String rehash = vh.hashStringWithSHA(original);
-                                verified = vh.CompareHash(decryptedhash,rehash);
+                                verified = vh.CompareHash(decryptedhash, rehash);
                                 Log.d("rehash", rehash);
                                 Log.d("decryptedhash", decryptedhash);
 
 
-                                verResult.setText("Verify Result: "+verified);
+                                verResult.setText("Verify Result: " + verified);
                             }
-                            //DownloadFile dl = new DownloadFile();
-                            //dl.execute();
-                            //setText
 
-                            originalData.setText("Original Data: " +response.getString("unhashedData"));
-                            verResult.setText("Verified: "+verified);
-                        }
-                        catch (Exception e){
+                            originalData.setText("Original Data: " + response.getString("unhashedData"));
+                            verResult.setText("Verified: " + verified);
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
 
@@ -146,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d("aaaa",error.toString());
+                        Log.d("aaaa", error.toString());
 
                     }
                 });
@@ -199,58 +195,56 @@ public class MainActivity extends AppCompatActivity {
                 JSONObject toPost4 = new JSONObject();
 
                 //try{
-                    //toPost.put("encryptedHash",responseData.getString("encryptedHash"));
-                    //toPost.put("encryptedHash","5E674BB98239F4B9BBDD3CF545023FAE421BC0B8C5D0B111111111111111111111111111111111111111111111111111111111111111");
-                    //toPost.put("batchID",batchID);
-                    // toPost.put("unhashedData",responseData.getString("unhashedData"));
-                    //toPost.put("movement",spinner.getSelectedItem().toString().toLowerCase());
+                //toPost.put("encryptedHash",responseData.getString("encryptedHash"));
+                //toPost.put("encryptedHash","5E674BB98239F4B9BBDD3CF545023FAE421BC0B8C5D0B111111111111111111111111111111111111111111111111111111111111111");
+                //toPost.put("batchID",batchID);
+                // toPost.put("unhashedData",responseData.getString("unhashedData"));
+                //toPost.put("movement",spinner.getSelectedItem().toString().toLowerCase());
 
 
-                    //Log.d("LOGGG", toPost.toString());
+                //Log.d("LOGGG", toPost.toString());
 
-                    //message = batchIDv.getText().toString();
+                //message = batchIDv.getText().toString();
 
-                    //String secret = "bridge twice ash force birth pause trickle sharp tender disappear spoken kid";
-                    //secret = secret.replaceAll(" ","%20");
+                //String secret = "bridge twice ash force birth pause trickle sharp tender disappear spoken kid";
+                //secret = secret.replaceAll(" ","%20");
                 //}catch (Exception e){
                 //   e.printStackTrace();
                 //}
                 /* link = "http://174.140.168.136:6876/nxt?requestType=sendMessage&secretPhrase="+ secret +"&recipient="+ nxtAccNum +"&message=" + toPost +"&deadline=60&feeNQT=0";  // nxt api call for sending message
                     Log.d("asdf",link);*/
 
-                if(responseData== null){
-                    Log.d("NULL","NULLLLLLLLL");
-                    Toast.makeText(getApplicationContext(),"Please ensure that you are connected to a network with a working server",Toast.LENGTH_LONG).show();
-                }
-                else if(nxtAccNum == null){
-                    Log.d("null laaaa","aaaaaaaaaaa");
-                    Toast.makeText(getApplicationContext(),"Please scan a valid QR before trying to make a transaction",Toast.LENGTH_LONG).show();
-                }
-                else{
-                    Log.d("NULL","not nullllllll");
-                    try{
+                if (responseData == null) {
+                    Log.d("NULL", "NULLLLLLLLL");
+                    Toast.makeText(getApplicationContext(), "Please ensure that you are connected to a network with a working server", Toast.LENGTH_LONG).show();
+                } else if (nxtAccNum == null) {
+                    Log.d("null laaaa", "aaaaaaaaaaa");
+                    Toast.makeText(getApplicationContext(), "Please scan a valid QR before trying to make a transaction", Toast.LENGTH_LONG).show();
+                } else {
+                    Log.d("NULL", "not nullllllll");
+                    try {
                         //first post data
-                        toPost1.put("batchID",batchID);
-                        toPost1.put("movement",spinner.getSelectedItem().toString().toLowerCase());
-                        toPost1.put("unhashedData",responseData.getString("unhashedData"));
-                        link1= nxtFrontLink+toPost1.toString()+nxtEndLink;
+                        toPost1.put("batchID", batchID);
+                        toPost1.put("movement", spinner.getSelectedItem().toString().toLowerCase());
+                        toPost1.put("unhashedData", responseData.getString("unhashedData"));
+                        link1 = nxtFrontLink + toPost1.toString() + nxtEndLink;
 
                         //second post data
-                        toPost2.put("batchID",batchID);
-                        toPost2.put("encryptedHash1",responseData.getString("encryptedHash1"));
-                        link2= nxtFrontLink+toPost2.toString()+nxtEndLink;
+                        toPost2.put("batchID", batchID);
+                        toPost2.put("encryptedHash1", responseData.getString("encryptedHash1"));
+                        link2 = nxtFrontLink + toPost2.toString() + nxtEndLink;
 
                         //third post data
-                        toPost3.put("batchID",batchID);
-                        toPost3.put("encryptedHash1",responseData.getString("encryptedHash2"));
-                        link3= nxtFrontLink+toPost3.toString()+nxtEndLink;
+                        toPost3.put("batchID", batchID);
+                        toPost3.put("encryptedHash1", responseData.getString("encryptedHash2"));
+                        link3 = nxtFrontLink + toPost3.toString() + nxtEndLink;
 
                         //fourth post data
-                        toPost4.put("batchID",batchID);
-                        toPost4.put("encryptedHash1",responseData.getString("encryptedHash3"));
-                        link4= nxtFrontLink+toPost4.toString()+nxtEndLink;
+                        toPost4.put("batchID", batchID);
+                        toPost4.put("encryptedHash1", responseData.getString("encryptedHash3"));
+                        link4 = nxtFrontLink + toPost4.toString() + nxtEndLink;
 
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
 
@@ -265,23 +259,23 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
         if (scanResult != null) {
-            Log.d("result",scanResult.toString());
+            Log.d("result", scanResult.toString());
 
-            try{
+            try {
                 JSONObject qrData = new JSONObject(scanResult.getContents());
 
-                if(qrData.has("nxtAccNum") && qrData.has("batchID") && qrData.has("productName")){
-                    Toast.makeText(getApplicationContext(),"Valid FoodChain™ QR detected",Toast.LENGTH_LONG).show();
+                if (qrData.has("nxtAccNum") && qrData.has("batchID") && qrData.has("productName")) {
+                    Toast.makeText(getApplicationContext(), "Valid FoodChain™ QR detected", Toast.LENGTH_LONG).show();
                     nxtAccNum = qrData.getString("nxtAccNum");
                     batchID = qrData.getString("batchID");        // format of qr data
                     productName = qrData.getString("productName");
 
                     batchIDv.setText(nxtAccNum + batchID + productName);
-                }else{
-                    Toast.makeText(getApplicationContext(),"Not a Valid FoodChain™ QR , please try again",Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getApplicationContext(), "Not a Valid FoodChain™ QR , please try again", Toast.LENGTH_LONG).show();
                 }
 
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
@@ -301,32 +295,30 @@ public class MainActivity extends AppCompatActivity {
             );
         }
     }
+
     public void firstPost(String urlString) {
 
-        try{
+        try {
             URL url = new URL(urlString);  // convert string to proper url
-            Log.d("url",url.toString());
-            postRequest = new JsonObjectRequest(Request.Method.POST, urlString,(String)null,
-                    new Response.Listener<JSONObject>()
-                    {
+            Log.d("url", url.toString());
+            postRequest = new JsonObjectRequest(Request.Method.POST, urlString, (String) null,
+                    new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
                             // response
-                            try{
+                            try {
                                 Log.d("Response", response.toString(4));
-                                Log.d("response",response.toString());
+                                Log.d("response", response.toString());
 
                                 secondPost(link2);
 
-                            }catch (JSONException e)
-                            {
+                            } catch (JSONException e) {
                                 e.printStackTrace();
                             }
 
                         }
                     },
-                    new Response.ErrorListener()
-                    {
+                    new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
                             // error
@@ -335,7 +327,7 @@ public class MainActivity extends AppCompatActivity {
                     }
             );
 
-        }catch (MalformedURLException e){
+        } catch (MalformedURLException e) {
             e.printStackTrace();
         }
 
@@ -344,29 +336,26 @@ public class MainActivity extends AppCompatActivity {
 
     public void secondPost(String urlString) {
 
-        try{
+        try {
             URL url = new URL(urlString);  // convert string to proper url
-            Log.d("url",url.toString());
-            postRequest = new JsonObjectRequest(Request.Method.POST, urlString,(String)null,
-                    new Response.Listener<JSONObject>()
-                    {
+            Log.d("url", url.toString());
+            postRequest = new JsonObjectRequest(Request.Method.POST, urlString, (String) null,
+                    new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
                             // response
-                            try{
+                            try {
                                 Log.d("Response", response.toString(4));
-                                Log.d("response",response.toString());
+                                Log.d("response", response.toString());
 
                                 thirdPost(link3);
-                            }catch (JSONException e)
-                            {
+                            } catch (JSONException e) {
                                 e.printStackTrace();
                             }
 
                         }
                     },
-                    new Response.ErrorListener()
-                    {
+                    new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
                             // error
@@ -375,7 +364,7 @@ public class MainActivity extends AppCompatActivity {
                     }
             );
 
-        }catch (MalformedURLException e){
+        } catch (MalformedURLException e) {
             e.printStackTrace();
         }
 
@@ -384,28 +373,25 @@ public class MainActivity extends AppCompatActivity {
 
     public void thirdPost(String urlString) {
 
-        try{
+        try {
             final URL url = new URL(urlString);  // convert string to proper url
-            Log.d("url",url.toString());
-            postRequest = new JsonObjectRequest(Request.Method.POST, urlString,(String)null,
-                    new Response.Listener<JSONObject>()
-                    {
+            Log.d("url", url.toString());
+            postRequest = new JsonObjectRequest(Request.Method.POST, urlString, (String) null,
+                    new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
                             // response
-                            try{
+                            try {
                                 Log.d("Response", response.toString(4));
-                                Log.d("response",response.toString());
+                                Log.d("response", response.toString());
                                 fourthPost(link4);
-                            }catch (JSONException e)
-                            {
+                            } catch (JSONException e) {
                                 e.printStackTrace();
                             }
 
                         }
                     },
-                    new Response.ErrorListener()
-                    {
+                    new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
                             // error
@@ -414,7 +400,7 @@ public class MainActivity extends AppCompatActivity {
                     }
             );
 
-        }catch (MalformedURLException e){
+        } catch (MalformedURLException e) {
             e.printStackTrace();
         }
 
@@ -423,30 +409,27 @@ public class MainActivity extends AppCompatActivity {
 
     public void fourthPost(String urlString) {
 
-        try{
+        try {
             URL url = new URL(urlString);  // convert string to proper url
-            Log.d("url",url.toString());
-            postRequest = new JsonObjectRequest(Request.Method.POST, urlString,(String)null,
-                    new Response.Listener<JSONObject>()
-                    {
+            Log.d("url", url.toString());
+            postRequest = new JsonObjectRequest(Request.Method.POST, urlString, (String) null,
+                    new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
                             // response
-                            try{
+                            try {
                                 Log.d("Response", response.toString(4));
-                                Log.d("response",response.toString());
+                                Log.d("response", response.toString());
 
-                                Toast.makeText(getApplicationContext(),"Successfully posted",Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(), "Successfully posted", Toast.LENGTH_LONG).show();
 
-                            }catch (JSONException e)
-                            {
+                            } catch (JSONException e) {
                                 e.printStackTrace();
                             }
 
                         }
                     },
-                    new Response.ErrorListener()
-                    {
+                    new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
                             // error
@@ -455,80 +438,78 @@ public class MainActivity extends AppCompatActivity {
                     }
             );
 
-        }catch (MalformedURLException e){
+        } catch (MalformedURLException e) {
             e.printStackTrace();
         }
 
         queue.add(postRequest);
     }
 
-//    class DownloadFile extends AsyncTask<String,String,String>
-//    {
-//        ProgressDialog loading;
-//        String FILE_URL="https://upload.wikimedia.org/wikipedia/wikimania2014/thumb/e/e2/Ask-Logo-Small.jpg/250px-Ask-Logo-Small.jpg";
-//        String FILE_Name="cacert";
-//        String temp;
-//
-//        @Override
-//        protected void onPreExecute() {
-//
-//            super.onPreExecute();
-//            loading = ProgressDialog.show(MainActivity.this,"Loading...","Wait...", true, true);
-//        }
-//
-//        @Override
-//        protected void onPostExecute(String result) {
-//            filePath=result;
-//            loading.dismiss();
-//        }
-//
-//        @Override
-//        protected String doInBackground(String... file_path) {
-//            int readBytes;
-//
-//            String path;
-//                temp= Environment.getExternalStorageDirectory().getPath()+"/"+FILE_Name+".pem";
-//                temp.replaceAll("\\s"," ");
-//                File f = new File(temp);
-//                Log.d("bba",f.toString());
-//                if(f.exists())
-//                {
-//                    Log.d("bb","bb");
-//                    path=f.toString();
-//                    return path;
-//                }
-//
-//                else{
-//                    try{
-//                        URL url = new URL(FILE_URL);
-//                        URLConnection connection=url.openConnection();
-//                        long fileLength=connection.getContentLength();
-//
-//                        InputStream input = new BufferedInputStream(url.openStream(),10*1024);
-//                        OutputStream output = new FileOutputStream(Environment.getExternalStorageDirectory().getPath()+"/"+FILE_Name+".jpg");
-//                        byte data[]=new byte[1024];
-//                        long totalBytes = 0;
-//
-//                        while((readBytes=input.read(data))!=-1)
-//                        {
-//                            totalBytes=totalBytes+readBytes;
-//                            Long percentage = (totalBytes*100)/fileLength;
-//                            publishProgress(String.valueOf(percentage));
-//                            output.write(data,0,readBytes);
-//                        }
-//
-//                        output.flush();
-//                        output.close();
-//                        input.close();
-//                        path = Environment.getExternalStorageDirectory().toString()+"/"+FILE_Name+".pem";
-//                        Log.d("got path?",path);
-//                        return path;
-//                    }catch(Exception e){
-//                        Log.d("Error",e.getMessage());
-//                    }
-////                }
-//            return null;
-//        }
-//    }
+    class DownloadFile extends AsyncTask<String[],String,String[]> //params,progress,result
+    {
+        ProgressDialog loading;
+        String FILE_URL="https://curl.haxx.se/ca/cacert-2017-01-18.pem";
+        String FILE_Name[]= {"SWE200","SBE200","BTU200"};
+        String temp;
+
+        @Override
+        protected void onPreExecute() {
+
+            super.onPreExecute();
+            loading = ProgressDialog.show(MainActivity.this,"Downloading...","Wait...", true, true);
+        }
+
+        @Override
+        protected void onPostExecute(String[] result) {
+            filePath=result;
+            loading.dismiss();
+            if(result!=null && result.length>0){
+                Toast.makeText(getApplicationContext(), "Download/Get Certs successfully", Toast.LENGTH_LONG).show();
+            }
+        }
+
+        @Override
+        protected String[] doInBackground(String[]... file_names) {
+            int readBytes;
+            String [] path = new String[FILE_Name.length];
+
+            for (int i=0;i<FILE_Name.length;i++) {
+                temp = MainActivity.this.getFilesDir() + "/" + FILE_Name[i] + ".pem";
+                temp.replaceAll("\\s", " ");
+                File f = new File(temp);
+                if (f.exists()) {
+                    Log.d("fileexist", "yes");
+                    path[i] = f.toString();
+                } else {
+                    try {
+                        URL url = new URL(FILE_URL);
+                        URLConnection connection = url.openConnection();
+                        long fileLength = connection.getContentLength();
+
+                        InputStream input = new BufferedInputStream(url.openStream(), 10 * 1024);
+                        OutputStream output = new FileOutputStream(MainActivity.this.getFilesDir() + "/" + FILE_Name[i] + ".pem");
+                        byte data[] = new byte[1024];
+                        long totalBytes = 0;
+
+                        while ((readBytes = input.read(data)) != -1) {
+                            totalBytes = totalBytes + readBytes;
+                            Long percentage = (totalBytes * 100) / fileLength;
+                            publishProgress(String.valueOf(percentage));
+                            output.write(data, 0, readBytes);
+                        }
+
+                        output.flush();
+                        output.close();
+                        input.close();
+                        path[i] = MainActivity.this.getFilesDir() + "/" + FILE_Name[i] + ".pem";
+                        Log.d("path created?", path[i]);
+                    } catch (Exception e) {
+                        Log.d("Error", e.getMessage());
+                    }
+                }
+            }
+            return path;
+        }
+    }
 
 }
