@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
         spinner = (Spinner) findViewById(R.id.spinner);
 
         DownloadFile dl = new DownloadFile();
-        dl.execute();
+      // dl.execute();
 
         queue = Volley.newRequestQueue(getApplicationContext());
 
@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 queue = Volley.newRequestQueue(getApplicationContext());
 
-                final String url = "http://192.168.43.61:7080/";
+                final String url = "http://192.168.0.102:7080/";
 
                 JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url, (String) null, new Response.Listener<JSONObject>() {
                     @Override
@@ -114,26 +114,26 @@ public class MainActivity extends AppCompatActivity {
 
                             encryptedHashData = encryptedHash1 + encryptedHash2 + encryptedHash3;
 
-                            VerifyHash vh = new VerifyHash();
-                            temp = Environment.getExternalStorageDirectory().getPath() + "/cacert.pem";
-                            temp.replaceAll("\\s", " ");
-                            File f = new File(temp);
-                            if (f.exists()) {
-                                PublicKey key = vh.ReadPemFile(f.toString());
-                                String decryptedhash = vh.DecryptHash(key, encryptedHashData);
-
-                                //String decryptedhash = vh.DecryptHash(key,response.getString("encryptedHash"));
-                                String rehash = vh.hashStringWithSHA(original);
-                                verified = vh.CompareHash(decryptedhash, rehash);
-                                Log.d("rehash", rehash);
-                                Log.d("decryptedhash", decryptedhash);
-
-
-                                verResult.setText("Verify Result: " + verified);
-                            }
-
-                            originalData.setText("Original Data: " + response.getString("unhashedData"));
-                            verResult.setText("Verified: " + verified);
+//                            VerifyHash vh = new VerifyHash();
+//                            temp = Environment.getExternalStorageDirectory().getPath() + "/cacert.pem";
+//                            temp.replaceAll("\\s", " ");
+//                            File f = new File(temp);
+//                            if (f.exists()) {
+//                                PublicKey key = vh.ReadPemFile(f.toString());
+//                                String decryptedhash = vh.DecryptHash(key, encryptedHashData);
+//
+//                                //String decryptedhash = vh.DecryptHash(key,response.getString("encryptedHash"));
+//                                String rehash = vh.hashStringWithSHA(original);
+//                                verified = vh.CompareHash(decryptedhash, rehash);
+//                                Log.d("rehash", rehash);
+//                                Log.d("decryptedhash", decryptedhash);
+//
+//
+//                                verResult.setText("Verify Result: " + verified);
+//                            }
+//
+//                            originalData.setText("Original Data: " + response.getString("unhashedData"));
+//                            verResult.setText("Verified: " + verified);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -227,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
                         toPost1.put("batchID", batchID);
                         toPost1.put("movement", spinner.getSelectedItem().toString().toLowerCase());
                         toPost1.put("unhashedData", responseData.getString("unhashedData"));
-                        link1 = nxtFrontLink + toPost1.toString() + nxtEndLink;
+                        link1 = nxtFrontLink + URLEncoder.encode(toPost1.toString()) + nxtEndLink;
 
                         //second post data
                         toPost2.put("batchID", batchID);
@@ -236,12 +236,12 @@ public class MainActivity extends AppCompatActivity {
 
                         //third post data
                         toPost3.put("batchID", batchID);
-                        toPost3.put("encryptedHash1", responseData.getString("encryptedHash2"));
+                        toPost3.put("encryptedHash2", responseData.getString("encryptedHash2"));
                         link3 = nxtFrontLink + toPost3.toString() + nxtEndLink;
 
                         //fourth post data
                         toPost4.put("batchID", batchID);
-                        toPost4.put("encryptedHash1", responseData.getString("encryptedHash3"));
+                        toPost4.put("encryptedHash3", responseData.getString("encryptedHash3"));
                         link4 = nxtFrontLink + toPost4.toString() + nxtEndLink;
 
                     } catch (Exception e) {
